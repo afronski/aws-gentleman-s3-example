@@ -1,4 +1,6 @@
-# *Amazon S3 in Practice*
+# *Amazon S3 in Practice* [AWS Gentleman live stream](https://awsgentleman.com/live)
+
+![Architecture](./docs/architecture.png)
 
 In this set of assignments, we will work with several *Amazon S3 APIs* and features that are related to the capabilities of the *Object Storage*. This i
 
