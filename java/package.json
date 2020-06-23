@@ -1,0 +1,7 @@
+{
+  "name": "s3-video-transcoder",
+  "version": "1.0.0",
+  "devDependencies": {
+    "serverless-s3-remover": "~0.6.0"
+  }
+}

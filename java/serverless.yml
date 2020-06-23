@@ -1,0 +1,121 @@
+service: awsgentleman-sls-video-tcd
+
+provider:
+  name: aws
+  runtime: java11
+  stage: dev
+  region: eu-west-1
+  timeout: 10
+  memory: 1024
+
+  iamRoleStatements:
+    - Effect: "Allow"
+      Action:
+        - "cloudwatch:*"
+        - "logs:*"
+        - "elastictranscoder:*"
+        - "s3:*"
+        - "s3control:*"
+        - "iam:PassRole"
+      Resource: "*"
+
+package:
+  artifact: build/distributions/s3-video-transcoder.zip
+
+functions:
+
+  scheduleTranscodeJob:
+    handler: com.patternmatch.s3.ScheduleTranscodeJob
+    environment:
+      ELASTIC_TRANSCODER_PIPELINE_ID: <PUT_HERE_PIPELINE_ID_FROM_EXISTING_TCD_PIPELINE>
+      TRANSCODED_VIDEOS_PREFIX: transcoded-videos
+    events:
+      - s3:
+          bucket: awsgentleman-input-video
+          event: s3:ObjectCreated:Put
+          rules:
+            - prefix: uploaded-videos
+
+  generateListOfFilesAfterTranscoding:
+    handler: com.patternmatch.s3.GenerateListOfFilesAfterTranscoding
+    environment:
+      INPUT_BUCKET: awsgentleman-input-video
+      FILE_LISTS_PREFIX: lists
+    events:
+      - sns: awsgentleman-transcoding-job-completed
+
+  scheduleBatchCopying:
+    handler: com.patternmatch.s3.ScheduleBatchCopying
+    environment:
+      MANIFEST_PREFIX: manifests
+      OUTPUT_BUCKET: awsgentleman-output-video
+      ACCOUNT_ID: "383430062921"
+      IAM_ROLE_ARN:
+        Fn::GetAtt: [ S3BatchOperationIAMRole, Arn ]
+    events:
+      - s3:
+          bucket: awsgentleman-input-video
+          event: s3:ObjectCreated:Put
+          rules:
+            - prefix: lists
+
+resources:
+  Resources:
+
+    S3BucketForReadyVideos:
+      Type: 'AWS::S3::Bucket'
+      Properties:
+        BucketName: awsgentleman-output-video
+
+    S3BatchOperationIAMRole:
+      Type: 'AWS::IAM::Role'
+      Properties:
+        RoleName: awsgentleman-s3-batch-op-iam-role
+        AssumeRolePolicyDocument:
+          Version: "2012-10-17"
+          Statement:
+            - Action:
+                - sts:AssumeRole
+              Effect: Allow
+              Principal:
+                Service:
+                  - batchoperations.s3.amazonaws.com
+        Policies:
+          - PolicyName: awsgentleman-s3-batch-op-iam-role-policy
+            PolicyDocument:
+              Version: '2012-10-17'
+              Statement:
+                - Action:
+                  - s3:PutObject
+                  - s3:PutObjectAcl
+                  - s3:PutObjectTagging
+                  Effect: Allow
+                  Resource: arn:aws:s3:::awsgentleman-output-video/*
+                - Action:
+                  - s3:GetObject
+                  - s3:GetObjectAcl
+                  - s3:GetObjectTagging
+                  Effect: Allow
+                  Resource: arn:aws:s3:::awsgentleman-input-video/*
+                - Effect: Allow
+                  Action:
+                  - s3:GetObject
+                  - s3:GetObjectVersion
+                  - s3:GetBucketLocation
+                  Resource:
+                  - arn:aws:s3:::awsgentleman-input-video/*
+                - Effect: Allow
+                  Action:
+                  - s3:PutObject
+                  - s3:GetBucketLocation
+                  Resource:
+                  - arn:aws:s3:::awsgentleman-input-video/*
+
+plugins:
+  - serverless-s3-remover
+
+custom:
+  remover:
+    buckets:
+      - awsgentleman-input-video
+      - awsgentleman-output-video
