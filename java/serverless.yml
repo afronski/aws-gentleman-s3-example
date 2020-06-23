@@ -1,4 +1,4 @@
-service: awsgentleman-sls-video-tcd
+service: awsg-sls-video-tc
 
 provider:
   name: aws
@@ -15,7 +15,6 @@ provider:
         - "logs:*"
         - "elastictranscoder:*"
         - "s3:*"
-        - "s3control:*"
         - "iam:PassRole"
       Resource: "*"
 
@@ -27,7 +26,7 @@ functions:
   scheduleTranscodeJob:
     handler: com.patternmatch.s3.ScheduleTranscodeJob
     environment:
-      ELASTIC_TRANSCODER_PIPELINE_ID: <PUT_HERE_PIPELINE_ID_FROM_EXISTING_TCD_PIPELINE>
+      ELASTIC_TRANSCODER_PIPELINE_ID: 1592939737025-ajni4j
       TRANSCODED_VIDEOS_PREFIX: transcoded-videos
     events:
       - s3:
@@ -35,6 +34,7 @@ functions:
           event: s3:ObjectCreated:Put
           rules:
             - prefix: uploaded-videos
+          existing: true
 
   generateListOfFilesAfterTranscoding:
     handler: com.patternmatch.s3.GenerateListOfFilesAfterTranscoding
@@ -42,14 +42,14 @@ functions:
       INPUT_BUCKET: awsgentleman-input-video
       FILE_LISTS_PREFIX: lists
     events:
-      - sns: awsgentleman-transcoding-job-completed
+      - sns: arn:aws:sns:eu-west-1:080445063818:awsgentleman-transcoding-job-completed
 
   scheduleBatchCopying:
     handler: com.patternmatch.s3.ScheduleBatchCopying
     environment:
       MANIFEST_PREFIX: manifests
       OUTPUT_BUCKET: awsgentleman-output-video
-      ACCOUNT_ID: "383430062921"
+      ACCOUNT_ID: "080445063818"
       IAM_ROLE_ARN:
         Fn::GetAtt: [ S3BatchOperationIAMRole, Arn ]
     events:
@@ -58,19 +58,15 @@ functions:
           event: s3:ObjectCreated:Put
           rules:
             - prefix: lists
+          existing: true
 
 resources:
   Resources:
 
-    S3BucketForReadyVideos:
-      Type: 'AWS::S3::Bucket'
-      Properties:
-        BucketName: awsgentleman-output-video
-
     S3BatchOperationIAMRole:
       Type: 'AWS::IAM::Role'
       Properties:
-        RoleName: awsgentleman-s3-batch-op-iam-role
+        RoleName: awsgentleman-s3-batch-op-iam
         AssumeRolePolicyDocument:
           Version: "2012-10-17"
           Statement:
@@ -81,7 +77,7 @@ resources:
                 Service:
                   - batchoperations.s3.amazonaws.com
         Policies:
-          - PolicyName: awsgentleman-s3-batch-op-iam-role-policy
+          - PolicyName: awsgentleman-s3-batch-op-iam-policy
             PolicyDocument:
               Version: '2012-10-17'
               Statement:
@@ -116,6 +112,3 @@ plugins:
 
 custom:
   remover:
-    buckets:
-      - awsgentleman-input-video
-      - awsgentleman-output-video
