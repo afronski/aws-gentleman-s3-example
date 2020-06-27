@@ -1,4 +1,4 @@
-# *Amazon S3 in Practice* [AWS Gentleman live stream](https://awsgentleman.com/live)
+# *Amazon S3 in Practice* [AWS Maniac live stream](https://awsmaniac.com/live)
 
 In this set of assignments, we will work with several *Amazon S3 APIs* and features that are related to the capabilities of the *Object Storage*. We have just one constraint: we need to use as much *Amazon S3* features as we can at once! :wink:
 
@@ -113,4 +113,4 @@ As a result of your, lambda should be invoked when a new *CSV file* lands in a p
 
 ## Authors
 
-- [Wojciech Gawroński (afronski) - AWS Gentleman](https://github.com/afronski)
+- [Wojciech Gawroński (afronski)](https://github.com/afronski)
