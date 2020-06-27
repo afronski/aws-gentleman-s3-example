@@ -113,4 +113,4 @@ As a result of your, lambda should be invoked when a new *CSV file* lands in a p
 
 ## Authors
 
-- [Wojciech Gawroński (afronski)](https://github.com/afronski)
+- [Wojciech Gawroński (afronski) - AWS Maniac](https://github.com/afronski)
