@@ -30,7 +30,7 @@ functions:
       TRANSCODED_VIDEOS_PREFIX: transcoded-videos
     events:
       - s3:
-          bucket: awsgentleman-input-video
+          bucket: awsmaniac-input-video
           event: s3:ObjectCreated:Put
           rules:
             - prefix: uploaded-videos
@@ -39,22 +39,22 @@ functions:
   generateListOfFilesAfterTranscoding:
     handler: com.patternmatch.s3.GenerateListOfFilesAfterTranscoding
     environment:
-      INPUT_BUCKET: awsgentleman-input-video
+      INPUT_BUCKET: awsmaniac-input-video
       FILE_LISTS_PREFIX: lists
     events:
-      - sns: arn:aws:sns:eu-west-1:080445063818:awsgentleman-transcoding-job-completed
+      - sns: arn:aws:sns:eu-west-1:080445063818:awsmaniac-transcoding-job-completed
 
   scheduleBatchCopying:
     handler: com.patternmatch.s3.ScheduleBatchCopying
     environment:
       MANIFEST_PREFIX: manifests
-      OUTPUT_BUCKET: awsgentleman-output-video
+      OUTPUT_BUCKET: awsmaniac-output-video
       ACCOUNT_ID: "080445063818"
       IAM_ROLE_ARN:
         Fn::GetAtt: [ S3BatchOperationIAMRole, Arn ]
     events:
       - s3:
-          bucket: awsgentleman-input-video
+          bucket: awsmaniac-input-video
           event: s3:ObjectCreated:Put
           rules:
             - prefix: lists
@@ -66,7 +66,7 @@ resources:
     S3BatchOperationIAMRole:
       Type: 'AWS::IAM::Role'
       Properties:
-        RoleName: awsgentleman-s3-batch-op-iam
+        RoleName: awsmaniac-s3-batch-op-iam
         AssumeRolePolicyDocument:
           Version: "2012-10-17"
           Statement:
@@ -77,7 +77,7 @@ resources:
                 Service:
                   - batchoperations.s3.amazonaws.com
         Policies:
-          - PolicyName: awsgentleman-s3-batch-op-iam-policy
+          - PolicyName: awsmaniac-s3-batch-op-iam-policy
             PolicyDocument:
               Version: '2012-10-17'
               Statement:
@@ -86,26 +86,26 @@ resources:
                   - s3:PutObjectAcl
                   - s3:PutObjectTagging
                   Effect: Allow
-                  Resource: arn:aws:s3:::awsgentleman-output-video/*
+                  Resource: arn:aws:s3:::awsmaniac-output-video/*
                 - Action:
                   - s3:GetObject
                   - s3:GetObjectAcl
                   - s3:GetObjectTagging
                   Effect: Allow
-                  Resource: arn:aws:s3:::awsgentleman-input-video/*
+                  Resource: arn:aws:s3:::awsmaniac-input-video/*
                 - Effect: Allow
                   Action:
                   - s3:GetObject
                   - s3:GetObjectVersion
                   - s3:GetBucketLocation
                   Resource:
-                  - arn:aws:s3:::awsgentleman-input-video/*
+                  - arn:aws:s3:::awsmaniac-input-video/*
                 - Effect: Allow
                   Action:
                   - s3:PutObject
                   - s3:GetBucketLocation
                   Resource:
-                  - arn:aws:s3:::awsgentleman-input-video/*
+                  - arn:aws:s3:::awsmaniac-input-video/*
 
 plugins:
   - serverless-s3-remover
